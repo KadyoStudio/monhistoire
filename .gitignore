@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# celui-ci ne contient aucun secret et documente ce qu'il faut renseigner
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +41,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# serwist — service worker généré au build
+public/sw*
+public/swe-worker*
+
+# outillage local des assistants
+.agents/
+.claude/
+.windsurf/

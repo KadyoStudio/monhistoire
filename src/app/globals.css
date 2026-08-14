@@ -1,26 +1,102 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Charte graphique — cinq couleurs, pas une de plus.
+   Le rouge de marge ne sert qu'à signaler que le micro écoute. */
+@theme {
+  --color-encre: #4a3b7c;
+  --color-encre-profonde: #221f2e;
+  --color-papier: #f8f8f5;
+  --color-papier-marque: #ebebe4;
+  --color-marge: #c1443a;
+  --color-reglure: #c3c8de;
+
+  --font-titre: var(--font-spectral), Georgia, serif;
+  --font-recit: var(--font-literata), Georgia, serif;
+  --font-ui: var(--font-atkinson), system-ui, sans-serif;
+
+  --text-base: 1.25rem; /* 20px — plancher absolu */
+  --text-recit: 1.375rem; /* 22px */
+
+  --radius-doux: 0.75rem;
+  --spacing-touche: 3.5rem; /* 56px — cible tactile minimale */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Pas de thème sombre : le papier est un blanc neutre de cahier, et une
+   inversion de l'identité n'aurait aucun sens sur ce produit. */
+html {
+  background-color: var(--color-papier);
+  color: var(--color-encre-profonde);
+  font-family: var(--font-ui);
+  font-size: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+/* 20px est le plancher, partout, y compris les mentions légales et les
+   libellés de champ. Rien en dessous, nulle part. */
+small,
+label,
+figcaption,
+legend {
+  font-size: 1.125rem; /* 18px — mention secondaire, seul palier autorisé sous 20px */
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titre);
+  color: var(--color-encre-profonde);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 2.125rem; /* 34px */
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.75rem; /* 28px */
+  line-height: 1.25;
+}
+
+/* Le récit. C'est la police dans laquelle le narrateur relit sa vie.
+   Aligné à gauche, jamais justifié : la justification crée des rivières
+   blanches qui gênent la lecture des personnes malvoyantes. */
+.recit {
+  font-family: var(--font-recit);
+  font-size: var(--text-recit);
+  line-height: 1.75;
+  text-align: left;
+  max-width: 65ch; /* 60 à 70 caractères */
+}
+
+/* Cible tactile minimale, sans exception. */
+button,
+a[role="button"],
+input,
+select,
+textarea {
+  min-height: var(--spacing-touche);
+}
+
+/* Focus visible en permanence — le clavier et le lecteur d'écran doivent
+   toujours savoir où ils sont. */
+:focus-visible {
+  outline: 3px solid var(--color-encre);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

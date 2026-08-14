@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Mon Histoire">
+  <title>Mon Histoire</title>
+
+  <!-- Fond pleine surface : compatible icône maskable -->
+  <rect width="512" height="512" fill="#4A3B7C"/>
+
+  <!-- Filet de marge, décalé pour rester visible après rognage maskable -->
+  <rect x="86" y="128" width="7" height="256" fill="#C1443A"/>
+
+  <!-- Guillemet français ouvrant -->
+  <g fill="none" stroke="#F8F8F5" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 246 158 L 170 256 L 246 354"/>
+    <path d="M 356 158 L 280 256 L 356 354"/>
+  </g>
+</svg>

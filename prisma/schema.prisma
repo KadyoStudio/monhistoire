@@ -1,0 +1,582 @@
+// Mon Histoire — modèle de données
+//
+// Deux règles structurent tout ce fichier :
+//   1. Aucun texte n'écrase le précédent. rawText → readableText → editedText.
+//   2. Aucune suppression. « Mettre de côté » est un setAsideAt horodaté.
+//
+// Tout modèle métier porte bookId. Book.userId est unique. Toute requête part
+// de requireBook(), jamais d'un identifiant venu du client.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Better Auth — régénéré par le CLI, ne pas éditer à la main
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Champs additionnels — Better Auth additionalFields
+  role             UserRole @default(NARRATEUR)
+  helperEmail      String? // aidant : voie de secours d'accès, modifiable seul
+  helperName       String?
+  beneficiaryName  String? // transmission après décès
+  beneficiaryEmail String?
+  textSizePx       Int      @default(22) // réglage du récit, 22 → 34
+
+  // Suppression de compte : demandée explicitement, différée de 30 jours,
+  // annulable pendant le délai. Ne contredit pas la règle 2, qui protège les
+  // objets du récit et non le compte entier.
+  deletionRequestedAt DateTime?
+
+  sessions        Session[]
+  accounts        Account[]
+  book            Book?
+  entitlement     Entitlement?
+  consents        Consent[]
+  invitationsUsed Invitation[]     @relation("InvitationAccepted")
+  recoveries      AccessRecovery[] @relation("RecoveredUser")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// Récupération d'accès par l'aidant. Ouvre une session, ne transfère jamais la
+// propriété du livre. Tracée et consultable par le narrateur.
+model AccessRecovery {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("RecoveredUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  requestedByEmail String
+  requestedAt      DateTime  @default(now())
+  completedAt      DateTime?
+  seenByNarratorAt DateTime? // la notification reste visible tant que null
+
+  @@index([userId, requestedAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Le livre
+// ─────────────────────────────────────────────────────────────
+
+model Book {
+  id     String @id @default(cuid())
+  userId String @unique // un compte = un narrateur = un livre
+  user   User   @relation(fields: [userId], references: [id])
+
+  title      String?
+  subtitle   String?
+  dedication String? // dictée comme le reste
+  coverUrl   String?
+
+  onboardingStartedAt DateTime?
+  onboardingSkippedAt DateTime?
+  onboardingStep      Int       @default(0) // reprise exacte, 0 → 6
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  milestones  Milestone[]
+  people      Person[]
+  places      Place[]
+  chapters    Chapter[]
+  recordings  Recording[]
+  fragments   Fragment[]
+  photos      Photo[]
+  suggestions Suggestion[]
+  invitations Invitation[]
+  printOrders PrintOrder[]
+  dictionary  DictionaryEntry[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// La frise
+// ─────────────────────────────────────────────────────────────
+
+model Milestone {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  label String // EXACTEMENT tel que prononcé. C'est ce qui s'affiche.
+  kind  String? // libre : naissance, lieu, tournant, travail…
+
+  // Les années estimées servent au classement, jamais à l'affichage.
+  startYear Int?
+  endYear   Int?
+  precision DatePrecision @default(INCONNUE)
+
+  // « deux ans après mon mariage » — le mariage étant lui-même flou
+  relativeToId    String?
+  relativeTo      Milestone?  @relation("MilestoneRelative", fields: [relativeToId], references: [id])
+  derivedFrom     Milestone[] @relation("MilestoneRelative")
+  relativeOffsetY Int? // signé : -2 = deux ans avant
+
+  placeId String?
+  place   Place?  @relation(fields: [placeId], references: [id])
+
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  chapters    Chapter[]
+  suggestions Suggestion[]
+  photos      Photo[]
+
+  @@index([bookId, startYear])
+}
+
+model Person {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  name String // alimente le dictionnaire de transcription
+  role String? // libre : « mon frère », « la voisine ». Aucune catégorie imposée.
+
+  mentions   Int       @default(0) // sert aux suggestions par les gens
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  suggestions Suggestion[]
+
+  @@index([bookId])
+}
+
+model Place {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  name       String
+  startYear  Int?
+  endYear    Int?
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  milestones Milestone[]
+
+  @@index([bookId])
+}
+
+model Chapter {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  title       String // les mots du narrateur. Jamais une nomenclature.
+  order       Int
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+
+  printed    Boolean   @default(true) // désactivable à l'impression
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  fragments Fragment[]
+  photos    Photo[]
+
+  @@index([bookId, order])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Audio et récit
+// ─────────────────────────────────────────────────────────────
+
+model Recording {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  localId    String   @unique // id IndexedDB : réconciliation après reprise
+  blobUrl    String? // Vercel Blob UE, null tant que non envoyé
+  durationMs Int?
+  recordedAt DateTime
+
+  // C'est le Recording qui porte l'état affiché en attente de transcription,
+  // jamais un Fragment vide : rawText est requis et le restera.
+  uploadState        UploadState        @default(LOCAL)
+  uploadedBytes      Int                @default(0)
+  totalBytes         Int?
+  transcriptionState TranscriptionState @default(EN_ATTENTE)
+  transcriptionError String?
+  attempts           Int                @default(0)
+
+  peakLevel     Float? // contrôle du niveau sonore en temps réel
+  silentAudio   Boolean @default(false) // détecté AVANT envoi à Whisper
+  autoStopped   Boolean @default(false)
+  interviewMode Boolean @default(false) // deux voix assumées
+
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  fragments Fragment[]
+
+  @@index([bookId, recordedAt])
+  @@index([transcriptionState])
+}
+
+model Fragment {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  // Lien permanent vers l'origine : c'est la vue « Ce que j'ai raconté ».
+  // orderInRec ne change JAMAIS, quel que soit le rangement dans le livre.
+  recordingId String
+  recording   Recording @relation(fields: [recordingId], references: [id])
+  orderInRec  Int
+  startMs     Int? // réécoute en un geste
+  endMs       Int?
+
+  // Les trois couches. Aucune n'écrase la précédente.
+  rawText      String  @db.Text
+  readableText String? @db.Text
+  editedText   String? @db.Text
+
+  improvedAt DateTime?
+  editedAt   DateTime? // != null ⇒ « Améliorer la lecture » disparaît, définitivement
+
+  // Rangement : toujours proposé, jamais automatique
+  chapterId          String?
+  chapter            Chapter?  @relation(fields: [chapterId], references: [id])
+  orderInChapter     Int?
+  placementOfferedAt DateTime?
+  placementRefusedAt DateTime? // proposition ignorée : ne revient pas
+
+  speaker   FragmentSpeaker @default(NARRATEUR) // mode entretien : masquable à la lecture
+  isPrivate Boolean         @default(false) // jamais partagé, jamais imprimé
+  wordCount Int             @default(0) // repère interne, jamais affiché
+
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  photos Photo[]
+
+  @@index([bookId, recordingId, orderInRec])
+  @@index([chapterId, orderInChapter])
+}
+
+model Photo {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  blobUrl      String
+  caption      String? // dictée à la voix comme le reste
+  yearEstimate Int?
+  order        Int     @default(0)
+
+  fragmentId  String?
+  fragment    Fragment?  @relation(fields: [fragmentId], references: [id])
+  chapterId   String?
+  chapter     Chapter?   @relation(fields: [chapterId], references: [id])
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+
+  setAsideAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([bookId])
+}
+
+model DictionaryEntry {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  heard     String // « Quel Louand »
+  corrected String // « Kerlouan »
+  hits      Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([bookId, heard])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Aiguillage
+// ─────────────────────────────────────────────────────────────
+
+model Suggestion {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  prompt String // formulée en langage courant
+  source SuggestionSource
+  state  SuggestionState  @default(PROPOSEE)
+
+  // Deux sessions distinctes pour brûler une suggestion, 24 h minimum entre
+  // deux affichages de la même.
+  shownCount  Int       @default(0)
+  lastShownAt DateTime?
+
+  milestoneId  String?
+  milestone    Milestone? @relation(fields: [milestoneId], references: [id])
+  personId     String?
+  person       Person?    @relation(fields: [personId], references: [id])
+  gapStartYear Int?
+  gapEndYear   Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([bookId, state, lastShownAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Famille
+// ─────────────────────────────────────────────────────────────
+
+model Invitation {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  email String
+  name  String // nominative, jamais un lien anonyme
+  role  InvitationRole @default(LECTEUR)
+  token String         @unique // usage unique
+
+  state            InvitationState @default(ENVOYEE)
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  acceptedBy       User?           @relation("InvitationAccepted", fields: [acceptedByUserId], references: [id])
+  revokedAt        DateTime?
+  createdAt        DateTime        @default(now())
+
+  @@index([bookId, state])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Paiement (phase 10) et impression (phase 11)
+// ─────────────────────────────────────────────────────────────
+
+model Entitlement {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  // L'expiration suspend la dictée et RIEN d'autre.
+  dictationEndsAt         DateTime?
+  includedCopiesRemaining Int       @default(0)
+  extraOptions            Json      @default("{}")
+
+  stripePaymentIntentId String?   @unique
+  purchasedByEmail      String? // l'acheteur n'est pas le titulaire
+  purchasedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActivationCode {
+  id   String @id @default(cuid())
+  code String @unique // remis au narrateur par l'acheteur
+
+  stripePaymentIntentId String  @unique
+  purchasedByEmail      String
+  purchasedByName       String?
+  giftMessage           String?
+
+  redeemedByUserId String?
+  redeemedAt       DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model Consent {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  kind      ConsentKind
+  text      String      @db.Text // le texte exact accepté, archivé pour preuve
+  version   String
+  grantedAt DateTime    @default(now())
+  revokedAt DateTime?
+
+  @@index([userId, kind])
+}
+
+model PrintOrder {
+  id     String @id @default(cuid())
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
+  state PrintOrderState @default(BROUILLON)
+
+  batValidatedAt DateTime? // « J'ai relu, on peut imprimer »
+  batValidatedBy String? // narrateur, ou bénéficiaire s'il est décédé
+  archivedPdfUrl String? // archivé tel quel : réimprimer à l'identique dans dix ans
+  pageCount      Int?
+  volumeIndex    Int       @default(1) // coupe à l'impression, jamais un second récit
+
+  stripePaymentIntentId String? @unique
+  partnerRef            String?
+  totalCents            Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients PrintRecipient[]
+
+  @@index([bookId, state])
+}
+
+// Celui qui commande n'est presque jamais celui qui reçoit, et il commande
+// rarement un seul exemplaire.
+model PrintRecipient {
+  id           String     @id @default(cuid())
+  printOrderId String
+  printOrder   PrintOrder @relation(fields: [printOrderId], references: [id])
+
+  fullName   String
+  line1      String
+  line2      String?
+  postalCode String
+  city       String
+  country    String  @default("FR")
+
+  copies          Int     @default(1)
+  personalMessage String?
+  trackingNumber  String?
+
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+}
+
+// ─────────────────────────────────────────────────────────────
+
+enum UserRole {
+  NARRATEUR
+  AIDANT
+  LECTEUR
+}
+
+enum DatePrecision {
+  EXACTE
+  APPROXIMATIVE
+  RELATIVE
+  INCONNUE
+}
+
+enum UploadState {
+  LOCAL
+  EN_ATTENTE
+  EN_COURS
+  ENVOYE
+  ECHEC
+}
+
+enum TranscriptionState {
+  EN_ATTENTE
+  EN_COURS
+  TERMINEE
+  ECHEC
+  SILENCE_DETECTE
+}
+
+enum FragmentSpeaker {
+  NARRATEUR
+  AIDANT
+}
+
+enum SuggestionSource {
+  JALON
+  PERSONNE
+  CREUX_CHRONO
+  QUESTION_SENSORIELLE
+}
+
+enum SuggestionState {
+  PROPOSEE
+  RETENUE
+  IGNOREE
+  REFUSEE
+}
+
+enum InvitationRole {
+  LECTEUR
+  AIDANT
+}
+
+enum InvitationState {
+  ENVOYEE
+  ACCEPTEE
+  REVOQUEE
+}
+
+enum PrintOrderState {
+  BROUILLON
+  BAT_VALIDE
+  PAYE
+  TRANSMIS
+  EN_PRODUCTION
+  EXPEDIE
+  LIVRE
+}
+
+enum ConsentKind {
+  TRAITEMENT_VOCAL
+  CGU
+  CONSERVATION_ILLIMITEE
+}

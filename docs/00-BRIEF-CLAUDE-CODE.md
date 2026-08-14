@@ -79,7 +79,11 @@ client.
 4. **L'IA nettoie la lisibilité, elle ne réécrit pas.** Voir §6.
 5. **Aucun état ambigu affiché.** Un utilisateur qui ne sait pas si son enregistrement est
    conservé est un utilisateur perdu.
-6. **L'export intégral est toujours disponible**, sans condition, y compris compte expiré.
+6. **L'export intégral est toujours disponible pour le narrateur**, sans condition, y
+   compris compte expiré. Deux exports distincts, jamais présentés au même endroit :
+   « Mon archive » (tout, y compris les fragments privés et l'audio) et « Le livre » (à
+   partager et à imprimer, sans les fragments privés). Cette règle n'a jamais visé le
+   partage.
 7. **Le produit ne juge, ne corrige et ne modère jamais le contenu du récit.** Ni les
    faits, ni les dates, ni les contradictions, ni les répétitions.
 
@@ -141,8 +145,9 @@ paragraphes, corriger l'orthographe des mots manifestement mal transcrits.
 
 **Interdit :** reformuler une phrase déjà compréhensible, enrichir le vocabulaire, ajouter
 transitions ou détails, uniformiser le registre, lisser un régionalisme ou une tournure
-ancienne, modifier un fait, une date ou un nom, déplacer ou fusionner un passage de sa
-propre initiative.
+ancienne, modifier un fait, une date ou un nom, déplacer, fusionner ou scinder un passage
+de sa propre initiative — le rangement est toujours une proposition validée par le
+narrateur.
 
 Le rangement d'un fragment est **toujours une proposition validée par le narrateur**, jamais
 une action automatique, même à confiance élevée.
@@ -231,9 +236,17 @@ notification culpabilisante.
 **Phase 9 — Famille**
 Invitations nominatives en lecture seule, révocables. Marquage privé d'un fragment.
 
-**Phase 10 — Export et impression**
-PDF de lecture, archive intégrale texte + audio, et PDF prêt pour l'imprimeur.
-Voir `impression-et-marche-france.md`.
+**Phase 10 — Paiement**
+Stripe en paiement unique, jamais d'abonnement. Droit d'accès porté par le compte : date de
+fin de dictée, exemplaires inclus restants, options achetées. Achat pour un tiers avec code
+d'activation à remettre au narrateur. Écran de fin de période sobre et non anxiogène.
+L'expiration suspend la dictée et **rien d'autre**.
+Voir `impression-et-marche-france.md` §2.4.
+
+**Phase 11 — Export et impression**
+Deux exports distincts : « Mon archive » pour le narrateur, intégrale et sans condition, et
+« Le livre » à partager et imprimer, qui exclut les fragments privés. PDF prêt pour
+l'imprimeur. Voir `impression-et-marche-france.md`.
 
 ---
 

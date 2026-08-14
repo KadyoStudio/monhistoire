@@ -188,7 +188,7 @@ partage entre frères et sœurs. Un abonnement ne s'offre pas.
 - Réimpression à l'identique, à tout moment, même des années plus tard
 - Couverture rigide, papier supérieur
 - Prolongation de la période de dictée, tarif réduit
-- Second tome
+- Impression en plusieurs tomes (une coupe à l'impression, jamais un second récit)
 - Numérisation de photos papier ou de cassettes audio anciennes
 - Livre audio monté à partir de sa vraie voix (à terme — forte valeur émotionnelle, coût
   marginal faible)

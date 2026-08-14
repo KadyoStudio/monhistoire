@@ -229,6 +229,12 @@ partir d'un compte inactif. L'audio de la voix a souvent plus de valeur que le t
 → Procédure de transmission simple, documentée, réalisable par une famille en deuil qui
 n'a pas envie de se battre avec un logiciel.
 
+**Suppression de compte.** La règle 2 protège les objets du récit dans l'usage courant, pas
+le compte entier. Le droit à l'effacement s'exerce par une suppression de compte demandée
+explicitement, **différée de trente jours**, annoncée comme telle et annulable pendant tout
+le délai. C'est le seul point du dossier à conséquence juridique : il vit dans les documents
+autant que dans le code.
+
 ### 4.9 Exploitation
 
 **Coût de stockage audio**
@@ -260,8 +266,12 @@ moment, sans le demander à personne.
 ## 6. Hors périmètre V1
 
 - Correction ou vérification factuelle
-- Suggestions de sujets générées par IA
+- Suggestions de sujets **inventées par une IA à partir du récit**. Les suggestions ancrées
+  sur la frise, qui sont déterministes, et la banque de questions d'amorçage, écrite à la
+  main, restent dans le périmètre
 - Collaboration en temps réel
-- Impression et livraison d'un livre physique
 - Application native iOS / Android
 - Multilingue au-delà du français
+
+**L'impression et la livraison d'un livre physique sont dans le périmètre V1.** C'est la
+raison d'achat et le seul indicateur qui compte — voir `impression-et-marche-france.md`.

@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Fichiers générés : le service worker construit par Serwist et le client
+    // Prisma. Ni l'un ni l'autre ne se corrige à la main.
+    "public/sw.js",
+    "public/swe-worker*.js",
+    "src/generated/**",
   ]),
 ]);
 

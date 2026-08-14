@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" width="520" height="140" role="img" aria-label="Mon Histoire">
+  <title>Mon Histoire</title>
+
+  <!-- Filet de marge -->
+  <rect x="8" y="24" width="3" height="92" fill="#C1443A"/>
+
+  <!-- Guillemet français ouvrant -->
+  <g fill="none" stroke="#4A3B7C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 66 42 L 40 70 L 66 98"/>
+    <path d="M 104 42 L 78 70 L 104 98"/>
+  </g>
+
+  <!-- Nom -->
+  <text x="140" y="84"
+        font-family="Spectral, Georgia, serif"
+        font-size="46"
+        font-weight="500"
+        letter-spacing="0.5"
+        fill="#221F2E">Mon Histoire</text>
+</svg>

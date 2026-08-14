@@ -48,6 +48,11 @@ Deux vues sur le même contenu, et c'est ce double accès qui fait tout le produ
 **Vue « Ce que j'ai raconté »** — chronologie des séances, dans l'ordre où le narrateur a
 parlé. Rien n'est déplacé, rien n'est masqué. C'est sa trace brute, elle ne bouge jamais.
 
+Précision : c'est **l'ordre** qui est immuable, pas le texte. La vue affiche le texte courant
+(`editedText ?? readableText ?? rawText`) dans l'ordre d'origine, qui ne change jamais. Un
+fragment mis de côté y reste visible avec une mention discrète et sans marqueur négatif —
+sinon la trace est trouée, et c'est précisément ce que cette vue garantit.
+
 **Vue « Mon livre »** — les fragments rangés par chapitre. C'est la vue qui sert à la
 lecture et à l'export.
 
