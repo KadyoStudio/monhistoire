@@ -23,9 +23,15 @@ export default function ConnexionPage() {
 
     if (error) {
       // Les erreurs ne s'excusent pas et ne sont jamais vagues : ce qui s'est
-      // passé, et quoi faire maintenant.
+      // passé, et quoi faire maintenant. Surtout, une panne de notre côté ne
+      // doit jamais être présentée comme une faute de l'utilisateur — il
+      // vérifierait une adresse correcte en se croyant en tort.
+      const panneDeNotreCote = (error.status ?? 0) >= 500;
+
       setErreur(
-        "Le lien n'a pas pu partir. Vérifiez votre adresse e-mail, puis réessayez.",
+        panneDeNotreCote
+          ? "L'envoi ne fonctionne pas en ce moment. Ce n'est pas votre adresse : réessayez dans quelques minutes."
+          : "Cette adresse e-mail n'est pas reconnue. Vérifiez qu'elle est bien écrite, puis réessayez.",
       );
       setEtat("saisie");
       return;

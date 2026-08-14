@@ -52,3 +52,6 @@ public/swe-worker*
 .agents/
 .claude/
 .windsurf/
+
+.vercel
+.env*
