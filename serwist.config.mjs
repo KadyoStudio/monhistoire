@@ -6,7 +6,10 @@ import { serwist } from "@serwist/next/config";
 // Next, en dehors du bundler. C'est ce qui le rend compatible avec Turbopack,
 // activé par défaut depuis Next 16 — le mode plugin, lui, dépend de webpack.
 
+// Sur Vercel, le dépôt n'est pas toujours disponible pendant le build : la
+// variable d'environnement est plus fiable que la commande git.
 const revision =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
   spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf-8" }).stdout?.trim() ||
   crypto.randomUUID();
 

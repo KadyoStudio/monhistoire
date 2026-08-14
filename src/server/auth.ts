@@ -14,8 +14,14 @@ const UN_AN = UN_JOUR * 365;
 // pourquoi.
 const VALIDITE_DU_LIEN = 60 * 60;
 
+// Les déploiements de prévisualisation Vercel ont une URL différente à chaque
+// fois : sans cela, le lien de connexion y serait refusé comme origine inconnue.
+const originesVercel = process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : [];
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+
+  trustedOrigins: originesVercel,
 
   // Pas de mot de passe. La perte du mot de passe est un cas extrêmement
   // fréquent dans cette tranche d'âge, et souvent définitif.
